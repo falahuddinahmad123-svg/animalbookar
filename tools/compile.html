@@ -1,0 +1,17 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Compile animal pages</title><script src="../config.js"></script></head><body><h1>Compiler 8 halaman hewan</h1><p id="status">Memuat compiler...</p><a id="download" hidden download="animals.mind">Unduh animals.mind</a><script type="module">
+window.compileState={progress:0};
+window.addEventListener('unhandledrejection',e=>{window.compileState.error=String(e.reason);document.querySelector('#status').textContent=String(e.reason)});
+try {
+ const {Compiler}=await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js');
+ const images=[];
+ for(const animal of BOOK_CONFIG.animals){const img=new Image();img.src='../'+animal.marker.replace('./','');await img.decode();images.push(img)}
+ const compiler=new Compiler();
+ await compiler.compileImageTargets(images,p=>{window.compileState.progress=Math.round(p);document.querySelector('#status').textContent='Compiling '+Math.round(p)+'%'});
+ const bytes=compiler.exportData();const targets=new Compiler().importData(bytes);
+ if(targets.length!==BOOK_CONFIG.animals.length)throw Error('Target count mismatch');
+ let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+ window.compiledBase64=btoa(binary);window.compileState={done:true,bytes:bytes.length,targets:targets.length,order:BOOK_CONFIG.animals.map(a=>a.id)};
+ const a=document.querySelector('#download');a.href=URL.createObjectURL(new Blob([bytes]));a.hidden=false;
+ document.querySelector('#status').textContent='Selesai. Simpan unduhan di assets/markers/animals.mind. Urutan: '+window.compileState.order.join(', ');
+}catch(e){window.compileState.error=String(e);document.querySelector('#status').textContent=String(e)}
+</script></body></html>
