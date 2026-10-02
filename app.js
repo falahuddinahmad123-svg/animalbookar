@@ -10,6 +10,37 @@ let activeAudio = null, audioToken = 0, audioTimer = null;
 let activeId = null;
 const entries = new Map();
 const assetIssues = new Map();
+const modelBuffers = new Map();
+function modelData(path) {
+  if (!modelBuffers.has(path)) {
+    const promise = resource(path).then(response => response.arrayBuffer());
+    modelBuffers.set(path, promise);
+    promise.catch(() => modelBuffers.delete(path));
+  }
+  return modelBuffers.get(path);
+}
+async function prefetchModels() {
+  // Fetch one at a time without parsing hidden models or blocking camera startup.
+  for (const animal of BOOK_CONFIG.animals) {
+    if (pageClosed) return;
+    try { await modelData(animal.model); } catch (error) { console.warn("Model prefetch deferred", animal.id, error); }
+  }
+}
+// Reuse the permission stream instead of opening the physical camera a second time.
+function attachCamera(instance, stream) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video"); instance.video = video;
+    video.autoplay = true; video.muted = true; video.playsInline = true;
+    Object.assign(video.style, { position: "absolute", top: "0", left: "0", zIndex: "-2" });
+    ui["ar-view"].append(video);
+    video.onloadedmetadata = () => {
+      video.width = video.videoWidth; video.height = video.videoHeight;
+      video.play().then(resolve, reject);
+    };
+    video.onerror = () => reject(new Error("Video kamera gagal dimuat."));
+    video.srcObject = stream;
+  });
+}
 
 function status(message) { ui.status.textContent = message; }
 function issue(path, message, error) {
@@ -85,8 +116,7 @@ function loadAnimal(entry) {
 }
 async function loadAnimalModel(entry) {
   try {
-    const response = await resource(entry.config.model);
-    const data = await response.arrayBuffer();
+    const data = await modelData(entry.config.model);
     const model = await timeout(new GLTFLoader().parseAsync(data, new URL(".", new URL(entry.config.model, location.href)).href), 60000, "Model gagal diproses.");
     const box = new THREE.Box3().setFromObject(model.scene);
     const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
@@ -98,6 +128,7 @@ async function loadAnimalModel(entry) {
     entry.visual.traverse(object => { object.geometry?.dispose(); if (object.material) materials.add(object.material); });
     for (const material of materials) material.dispose();
     entry.visual.clear(); entry.visual.add(normalized); entry.placeholder = false;
+    modelBuffers.delete(entry.config.model);
     if (activeId === entry.config.id && (mode !== "ar" || tracking)) status(`${entry.config.name} terdeteksi`);
     if (model.animations.length) {
       entry.mixer = new THREE.AnimationMixer(model.scene);
@@ -110,7 +141,8 @@ function animateAnimals(delta, camera) {
   content.updateWorldMatrix(true, false); content.getWorldQuaternion(pose.parent); camera.getWorldQuaternion(pose.camera);
   for (const entry of entries.values()) {
     if (!entry.group.visible) continue;
-    if (entry.config.faceCamera) entry.visual.quaternion.copy(pose.parent).invert().multiply(pose.camera).multiply(entry.correction);
+    if (mode === "preview") entry.visual.quaternion.identity();
+    else if (entry.config.faceCamera) entry.visual.quaternion.copy(pose.parent).invert().multiply(pose.camera).multiply(entry.correction);
     else entry.visual.quaternion.copy(entry.correction);
     entry.mixer?.update(delta);
   }
@@ -156,6 +188,7 @@ async function startAR() {
   if (arFailed) { location.reload(); return; }
   if (starting || mode === "ar") return;
   starting = true; ui["start-ar"].disabled = true; ui["start-ar"].hidden = true; stopSound();
+  let cameraStream;
   try {
     if (!isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error("Kamera membutuhkan HTTPS atau localhost dan browser yang mendukung kamera.");
     try { await resource(BOOK_CONFIG.target, "HEAD"); }
@@ -164,9 +197,8 @@ async function startAR() {
       throw new Error("Tambahkan gambar halaman dan hasil compile .mind sebelum memulai AR.");
     }
     status("Meminta izin kamera…");
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-    stream.getTracks().forEach(track => track.stop());
-    if (pageClosed) return;
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } }, audio: false });
+    if (pageClosed) { cameraStream.getTracks().forEach(track => track.stop()); return; }
     if (!mindar) {
       const { MindARThree } = await timeout(import(MINDAR_URL), 30000, "CDN MindAR tidak dapat dimuat.");
       mindar = new MindARThree({ container: ui["ar-view"], imageTargetSrc: BOOK_CONFIG.target, maxTrack: 1, uiLoading: "no", uiScanning: "no", uiError: "no", ...BOOK_CONFIG.tracking });
@@ -191,6 +223,7 @@ async function startAR() {
     previewRenderer.setAnimationLoop(null); previewRenderer.domElement.hidden = true;
     mindar.renderer.domElement.hidden = false; mindar.scene.add(content);
     status("Menyiapkan tracking…");
+    mindar._startVideo = () => attachCamera(mindar, cameraStream);
     const cameraStart = mindar.start();
     cameraStart.then(() => { if (arFailed || pageClosed || mode !== "ar") stopCamera(); }, () => {});
     await timeout(cameraStart, 45000, "MindAR terlalu lama dimulai. Periksa file .mind lalu muat ulang halaman.");
@@ -199,7 +232,9 @@ async function startAR() {
     ui.mode.textContent = "Mode AR"; ui.preview.hidden = !PREVIEW_MODE; ui["start-ar"].hidden = true;
     mindar.renderer.setAnimationLoop(renderAR);
     if (!tracking) status("Arahkan kamera ke halaman buku");
+    void prefetchModels();
   } catch (error) {
+    cameraStream?.getTracks().forEach(track => track.stop());
     arFailed = !!mindar;
     if (arFailed) ui["start-ar"].textContent = "Muat ulang untuk mencoba AR";
     usePreview();
@@ -280,10 +315,7 @@ async function init() {
     usePreview(); ui["start-ar"].disabled = false;
     if (PREVIEW_MODE) await selectPreview(BOOK_CONFIG.animals[0].id);
     else await startAR();
-    // Only headers are checked here; models/audio are loaded on demand.
-    const checks = [BOOK_CONFIG.target, ...BOOK_CONFIG.animals.flatMap(item => [item.marker, item.sound])];
-    await Promise.allSettled(checks.map(async path => { try { await resource(path, "HEAD"); } catch (error) { issue(path, "Aset tidak ditemukan atau tidak bisa diakses.", error); } }));
-    if (assetIssues.size) ui["asset-details"].open = true;
+
   } catch (error) { status(error.message || "Aplikasi gagal dimuat. Coba browser lain yang mendukung WebGL."); console.error(error); }
 }
 window.addEventListener("unhandledrejection", event => { event.preventDefault(); console.error(event.reason); arFailed = true; ui["start-ar"].textContent = "Muat ulang untuk mencoba AR"; usePreview(); status("AR mengalami masalah. Periksa target halaman dan muat ulang untuk mencoba lagi."); });

@@ -1,13 +1,13 @@
 "use strict";
-// Target indexes must match tools/compile.html order. Recompile after changing markers.
+// Target indexes follow compiler order. Rotation X = PI/2 stands models on the page.
 const BOOK_CONFIG = {
   "target": "./assets/markers/animals.mind",
   "tracking": {
     "filterMinCF": 0.001,
     "filterBeta": 100,
-    "warmupTolerance": 5,
-    "missTolerance": 8,
-    "smoothingRate": 14
+    "warmupTolerance": 2,
+    "missTolerance": 3,
+    "smoothingRate": 28
   },
   "animals": [
     {
@@ -23,9 +23,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -44,9 +44,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -65,9 +65,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -86,9 +86,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -107,9 +107,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -128,9 +128,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -149,9 +149,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],
@@ -170,9 +170,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": true,
+      "faceCamera": false,
       "rotation": [
-        0,
+        1.5707963267948966,
         0,
         0
       ],

@@ -27,8 +27,9 @@ let browser,socket;
  await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await call('Page.enable');
 
  await call('Page.addScriptToEvaluateOnNewDocument',{source:`
- window.testPage='elephant';window.hideTestCard=false;
+ window.cameraRequests=0;window.testPage='elephant';window.hideTestCard=false;
  navigator.mediaDevices.getUserMedia=async()=>{
+ window.cameraRequests++;
  const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=960;const ctx=canvas.getContext('2d');const images={};
  for(const id of ['elephant','frog','kitten','lion','monkey','rooster','tiger','wolf']){const im=new Image();im.src='/assets/markers/'+id+'.png';images[id]=im;}
  const draw=()=>{ctx.fillStyle='#dddddd';ctx.fillRect(0,0,1280,960);const im=images[window.testPage];if(!window.hideTestCard&&im?.complete&&im.naturalWidth)ctx.drawImage(im,340,180,600,600);};draw();
@@ -81,7 +82,9 @@ let browser,socket;
  await evaluate('window.testPage="elephant";window.hideTestCard=false');
  await until('tracking && activeId==="elephant" && !entries.get("elephant").placeholder','Automatic scan');
  const minimal=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(root,'verification/camera-minimal.png'),Buffer.from(minimal.data,'base64'));
- console.log('PASS automatic camera, scan and minimal UI');
+ assert.equal(await evaluate('window.cameraRequests'),1);
+ assert(await evaluate('entries.get(activeId).visual.quaternion.angleTo(entries.get(activeId).correction)<0.001'));
+ console.log('PASS single camera acquisition, page-relative orientation, automatic scan and minimal UI');
  await call('Page.addScriptToEvaluateOnNewDocument',{source:'navigator.mediaDevices.getUserMedia=async()=>{throw new DOMException("Denied","NotAllowedError")};'});
  await call('Page.navigate',{url:origin});
  await until('typeof ui!=="undefined" && ui.status.textContent.includes("Izinkan")','Camera denied message');
