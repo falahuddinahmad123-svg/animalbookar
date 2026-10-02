@@ -4,7 +4,7 @@ Satu halaman = satu marker = satu hewan 3D = satu suara sesuai nama. Delapan hal
 
 ## Menjalankan
 
-Buka folder ini di VS Code. Klik kanan `index.html` > **Open with Live Server**. Halaman langsung meminta izin kamera dan memulai scan. Arahkan kamera ke halaman buku, lalu ketuk hewan untuk mendengar suara. Tampilan hanya berisi status singkat; tombol coba lagi muncul jika kamera gagal dan tombol hentikan suara muncul saat audio aktif.
+Buka folder ini di VS Code. Klik kanan `index.html` > **Open with Live Server**. Halaman langsung meminta izin kamera dan memulai scan. Arahkan kamera ke halaman buku, lalu ketuk hewan untuk mendengar suara. Tampilan hanya berisi status singkat; tombol coba lagi muncul jika kamera gagal dan audio berhenti otomatis maksimal 15 detik setelah mulai diputar.
 
 Pratinjau pengembangan tetap tersedia melalui `/?preview=1`, tidak ditampilkan pada alur scan biasa.
 
@@ -50,3 +50,5 @@ Uji browser tersebut sudah lulus. Kamera fisik HP, izin kamera perangkat, pencah
 Dockerfile, nginx.conf.template, dan railway.toml menyediakan server statis untuk Railway. Belum ada deployment atau repository baru yang dibuat pada penyelesaian ini. Jangan menggunakan domain/repository Business Card untuk project ini tanpa instruksi.
 
 Referensi: [MindAR multi-targets](https://hiukim.github.io/mind-ar-js-doc/examples/multi-targets/).
+
+Model belum dimuat: tidak ada bentuk placeholder. Label nama di bawah model dan tombol hentikan suara dihapus. File MP3 asli tetap utuh; batas 15 detik diterapkan saat playback.

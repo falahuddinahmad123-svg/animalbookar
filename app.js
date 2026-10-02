@@ -1,11 +1,12 @@
 "use strict";
-const ui = Object.fromEntries(["ar-view", "mode", "status", "instruction", "audio-status", "animal-buttons", "start-ar", "preview", "stop-audio", "asset-details", "asset-summary", "asset-list"].map(id => [id, document.getElementById(id)]));
+const ui = Object.fromEntries(["ar-view", "mode", "status", "instruction", "audio-status", "animal-buttons", "start-ar", "preview", "asset-details", "asset-summary", "asset-list"].map(id => [id, document.getElementById(id)]));
 const PREVIEW_MODE = new URLSearchParams(location.search).get("preview") === "1";
 document.body.dataset.preview = String(PREVIEW_MODE);
 const MINDAR_URL = "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js";
 let THREE, GLTFLoader, previewRenderer, previewScene, previewCamera, content, clock, raycaster, pointer;
 let mindar, anchor, pose, mode = "preview", tracking = false, poseReady = false, starting = false, pageClosed = false, arFailed = false;
-let activeAudio = null, audioToken = 0;
+const MAX_AUDIO_SECONDS = 15;
+let activeAudio = null, audioToken = 0, audioTimer = null;
 let activeId = null;
 const entries = new Map();
 const assetIssues = new Map();
@@ -40,7 +41,7 @@ function validateConfig() {
   }
 }
 
-// PREVIEW: works without a marker, models, or audio. Shapes are explicitly placeholders.
+// Optional development preview. Animal groups stay empty until the GLB is ready.
 function setupPreview() {
   previewScene = new THREE.Scene();
   previewScene.background = new THREE.Color(0x14263d);
@@ -69,21 +70,10 @@ function resizePreview() {
   previewCamera.position.z = Math.max(1.9, 0.7 / Math.tan(Math.PI / 8) / previewCamera.aspect);
   previewCamera.updateProjectionMatrix();
 }
-function makeLabel(text) {
-  const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 128;
-  const ctx = canvas.getContext("2d"); ctx.fillStyle = "#14263d"; ctx.fillRect(0, 0, 512, 128);
-  ctx.fillStyle = "white"; ctx.font = "600 58px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, 256, 64, 480);
-  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
-  sprite.scale.set(0.28, 0.07, 1); sprite.position.y = -0.055; sprite.raycast = () => {}; return sprite;
-}
 function createAnimal(config) {
   const group = new THREE.Group(); group.userData.animalId = config.id; group.position.fromArray(config.position);
   const visual = new THREE.Group(); group.add(visual);
-  const shape = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), new THREE.MeshStandardMaterial({ color: config.color || 0x9debd1 }));
-  shape.position.y = 0.12; visual.add(shape);
-  const base = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.1), shape.material); base.position.y = 0.02; visual.add(base);
-  group.add(makeLabel(config.name)); group.visible = false; content.add(group);
+  group.visible = false; content.add(group);
   const button = document.createElement("button"); button.textContent = config.name; button.type = "button"; button.addEventListener("click", () => selectPreview(config.id)); ui["animal-buttons"].append(button);
   const entry = { config, group, visual, button, placeholder: true, mixer: null, correction: new THREE.Quaternion().setFromEuler(new THREE.Euler(...config.rotation)) };
   entries.set(config.id, entry); return entry;
@@ -114,7 +104,7 @@ async function loadAnimalModel(entry) {
       const clip = model.animations.find(item => item.name.toLowerCase() === "idle") || model.animations[0];
       entry.mixer.clipAction(clip).play();
     }
-  } catch (error) { issue(entry.config.model, `Model ${entry.config.name} belum tersedia/valid. Bentuk sederhana adalah placeholder.`, error); }
+  } catch (error) { issue(entry.config.model, `Model ${entry.config.name} belum tersedia/valid. Silakan muat ulang untuk mencoba lagi.`, error); }
 }
 function animateAnimals(delta, camera) {
   content.updateWorldMatrix(true, false); content.getWorldQuaternion(pose.parent); camera.getWorldQuaternion(pose.camera);
@@ -135,22 +125,24 @@ function renderPreview() {
 function stopSound(clear = true) {
   audioToken++;
   if (activeAudio) { activeAudio.pause(); activeAudio.currentTime = 0; activeAudio = null; }
-  ui["stop-audio"].disabled = true;
+  clearTimeout(audioTimer); audioTimer = null;
   if (clear) ui["audio-status"].textContent = "";
 }
 function playAnimal(id) {
   const entry = entries.get(id);
-  if (!entry || id !== activeId || !entry.group.visible || (mode === "ar" && !tracking) || starting) return;
+  if (!entry || entry.placeholder || id !== activeId || !entry.group.visible || (mode === "ar" && !tracking) || starting) return;
   stopSound();
   const token = audioToken;
   const audio = new Audio(entry.config.sound); activeAudio = audio;
-  ui["stop-audio"].disabled = false;
   ui["audio-status"].textContent = `Memuat suara ${entry.config.name}…`;
+  audio.ontimeupdate = () => { if (token === audioToken && audio.currentTime >= MAX_AUDIO_SECONDS) stopSound(); };
   audio.onended = () => { if (token === audioToken) stopSound(); };
   // play() is invoked directly in the click/pointer event to satisfy mobile audio rules.
   const result = audio.play();
   timeout(result || Promise.resolve(), 20000, "Suara terlalu lama dimuat.").then(() => {
-    if (token === audioToken) ui["audio-status"].textContent = `Suara ${entry.config.name}`;
+    if (token !== audioToken) return;
+    ui["audio-status"].textContent = "";
+    audioTimer = setTimeout(() => { if (token === audioToken) stopSound(); }, MAX_AUDIO_SECONDS * 1000);
   }).catch(error => {
     if (token !== audioToken) return;
     stopSound(false);
@@ -274,7 +266,7 @@ function setupEvents() {
   ui["ar-view"].addEventListener("pointerdown", event => { if (event.isPrimary && event.button === 0) down = { id: event.pointerId, x: event.clientX, y: event.clientY }; });
   ui["ar-view"].addEventListener("pointerup", event => { if (down?.id === event.pointerId && Math.hypot(event.clientX - down.x, event.clientY - down.y) < 12) hitAnimal(event); down = null; });
   ui["ar-view"].addEventListener("pointercancel", () => { down = null; });
-  ui["start-ar"].addEventListener("click", startAR); ui.preview.addEventListener("click", usePreview); ui["stop-audio"].addEventListener("click", () => stopSound());
+  ui["start-ar"].addEventListener("click", startAR); ui.preview.addEventListener("click", usePreview);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stopSound(); });
   window.addEventListener("pagehide", () => { pageClosed = true; stopCamera(); stopSound(); previewRenderer.setAnimationLoop(null); });
   window.addEventListener("pageshow", event => { if (event.persisted) location.reload(); });

@@ -50,6 +50,16 @@ let browser,socket;
   await evaluate('window.lastAudio=activeAudio;stopSound()');assert(await evaluate('lastAudio.paused && lastAudio.currentTime===0 && activeAudio===null'));
   console.log('PASS model, raycast, real MP3 playback and stop: '+id);
  }
+
+ assert(await evaluate('[...entries.values()].every(e=>e.group.children.length===1 && !e.group.children.some(o=>o.isSprite))'));
+ assert.equal(await evaluate('document.getElementById("stop-audio")'),null);
+ await evaluate('selectPreview("lion");playAnimal("lion")');
+ await until('activeAudio && activeAudio.currentTime>0','Long audio started');
+ assert(await evaluate('activeAudio.duration>15'));
+ await evaluate('window.cappedAudio=activeAudio');
+ await until('activeAudio===null','15 second cutoff',18);
+ assert(await evaluate('cappedAudio.paused && cappedAudio.currentTime===0'));
+ console.log('PASS no labels/stop control and real long audio automatically stops after 15 seconds');
  assert.equal(await evaluate('assetIssues.size'),0);
  await evaluate('selectPreview("elephant")');
  const png=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(root,'verification/preview-mobile.png'),Buffer.from(png.data,'base64'));
