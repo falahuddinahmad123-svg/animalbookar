@@ -7,7 +7,8 @@ let THREE, GLTFLoader, previewRenderer, previewScene, previewCamera, content, cl
 let mindar, anchor, pose, mode = "preview", tracking = false, poseReady = false, starting = false, pageClosed = false, arFailed = false;
 const MAX_AUDIO_SECONDS = 15;
 let activeAudio = null, audioToken = 0, audioTimer = null;
-let activeId = null;
+let activeId = null, drag = null;
+const ROTATION_PER_PIXEL = 0.012;
 const entries = new Map();
 const assetIssues = new Map();
 const modelBuffers = new Map();
@@ -106,7 +107,7 @@ function createAnimal(config) {
   const visual = new THREE.Group(); group.add(visual);
   group.visible = false; content.add(group);
   const button = document.createElement("button"); button.textContent = config.name; button.type = "button"; button.addEventListener("click", () => selectPreview(config.id)); ui["animal-buttons"].append(button);
-  const entry = { config, group, visual, button, placeholder: true, mixer: null, correction: new THREE.Quaternion().setFromEuler(new THREE.Euler(...config.rotation)) };
+  const entry = { config, group, visual, button, placeholder: true, mixer: null, yaw: 0, userRotation: new THREE.Quaternion(), correction: new THREE.Quaternion().setFromEuler(new THREE.Euler(...config.rotation)) };
   entries.set(config.id, entry); return entry;
 }
 function loadAnimal(entry) {
@@ -144,6 +145,7 @@ function animateAnimals(delta, camera) {
     if (mode === "preview") entry.visual.quaternion.identity();
     else if (entry.config.faceCamera) entry.visual.quaternion.copy(pose.parent).invert().multiply(pose.camera).multiply(entry.correction);
     else entry.visual.quaternion.copy(entry.correction);
+    entry.visual.quaternion.multiply(entry.userRotation);
     entry.mixer?.update(delta);
   }
 }
@@ -213,7 +215,7 @@ async function startAR() {
         };
         target.onTargetLost = () => {
           if (anchor !== target) return;
-          tracking = false; poseReady = false; content.visible = false; stopSound();
+          tracking = false; poseReady = false; content.visible = false; drag = null; stopSound();
           if (mode === "ar") status("Arahkan kamera ke halaman buku");
           updateButtons();
         };
@@ -274,7 +276,9 @@ function updateButtons() {
   }
 }
 function activateAnimal(id) {
-  stopSound(); activeId = id;
+  stopSound(); drag = null;
+  if (activeId !== id) { entries.get(id).yaw = 0; entries.get(id).userRotation.identity(); }
+  activeId = id;
   for (const entry of entries.values()) entry.group.visible = entry.config.id === id;
   const entry = entries.get(id);
   status(entry.placeholder ? `Memuat model ${entry.config.name}...` : `${entry.config.name} terdeteksi`);
@@ -284,23 +288,49 @@ async function selectPreview(id) {
   if (mode !== "preview" || starting || !entries.has(id)) return;
   await activateAnimal(id);
 }
-function hitAnimal(event) {
-  if (starting || (mode === "ar" && !tracking)) return;
+function pickAnimal(event) {
+  if (starting || !content.visible || (mode === "ar" && !tracking)) return;
   const renderer = mode === "ar" ? mindar.renderer : previewRenderer, camera = mode === "ar" ? mindar.camera : previewCamera;
   const rect = renderer.domElement.getBoundingClientRect();
   pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
   content.updateWorldMatrix(true, true); raycaster.setFromCamera(pointer, camera);
   for (const hit of raycaster.intersectObject(entries.get(activeId)?.group || content, true)) {
     for (let node = hit.object; node && node !== content; node = node.parent) {
-      if (node.userData.animalId) { playAnimal(node.userData.animalId); return; }
+      if (node.userData.animalId) return node.userData.animalId;
     }
   }
 }
+function hitAnimal(event) {
+  const id = pickAnimal(event);
+  if (id) playAnimal(id);
+}
 function setupEvents() {
-  let down;
-  ui["ar-view"].addEventListener("pointerdown", event => { if (event.isPrimary && event.button === 0) down = { id: event.pointerId, x: event.clientX, y: event.clientY }; });
-  ui["ar-view"].addEventListener("pointerup", event => { if (down?.id === event.pointerId && Math.hypot(event.clientX - down.x, event.clientY - down.y) < 12) hitAnimal(event); down = null; });
-  ui["ar-view"].addEventListener("pointercancel", () => { down = null; });
+  const surface = ui["ar-view"];
+  surface.addEventListener("pointerdown", event => {
+    if (!event.isPrimary || event.button !== 0) return;
+    const id = pickAnimal(event);
+    if (!id) return;
+    drag = { pointer: event.pointerId, animal: id, x: event.clientX, y: event.clientY, yaw: entries.get(id).yaw, moved: false };
+    surface.setPointerCapture(event.pointerId);
+  });
+  surface.addEventListener("pointermove", event => {
+    if (!drag || drag.pointer !== event.pointerId) return;
+    if (drag.animal !== activeId || (mode === "ar" && !tracking)) { drag = null; return; }
+    const dx = event.clientX - drag.x;
+    if (Math.hypot(dx, event.clientY - drag.y) >= 12) drag.moved = true;
+    if (!drag.moved) return;
+    const entry = entries.get(drag.animal);
+    entry.yaw = (drag.yaw + dx * ROTATION_PER_PIXEL) % (Math.PI * 2);
+    entry.userRotation.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, entry.yaw);
+  });
+  surface.addEventListener("pointerup", event => {
+    const gesture = drag; drag = null;
+    if (surface.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId);
+    if (!gesture || gesture.pointer !== event.pointerId || gesture.moved || Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 12) return;
+    if (pickAnimal(event) === gesture.animal) playAnimal(gesture.animal);
+  });
+  surface.addEventListener("pointercancel", () => { drag = null; });
+  surface.addEventListener("lostpointercapture", () => { drag = null; });
   ui["start-ar"].addEventListener("click", startAR); ui.preview.addEventListener("click", usePreview);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stopSound(); });
   window.addEventListener("pagehide", () => { pageClosed = true; stopCamera(); stopSound(); previewRenderer.setAnimationLoop(null); });

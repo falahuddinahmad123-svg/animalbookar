@@ -1,5 +1,5 @@
 "use strict";
-// Target indexes follow compiler order. Rotation X = PI/2 stands models on the page.
+// Target indexes follow compiler order. Models face the camera; dragging adds a local yaw offset.
 const BOOK_CONFIG = {
   "target": "./assets/markers/animals.mind",
   "tracking": {
@@ -23,9 +23,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -44,9 +44,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -65,9 +65,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -86,9 +86,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -107,9 +107,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -128,9 +128,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -149,9 +149,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],
@@ -170,9 +170,9 @@ const BOOK_CONFIG = {
         0.03
       ],
       "height": 0.6,
-      "faceCamera": false,
+      "faceCamera": true,
       "rotation": [
-        1.5707963267948966,
+        0,
         0,
         0
       ],

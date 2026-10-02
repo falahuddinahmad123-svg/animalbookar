@@ -29,7 +29,7 @@ Folder masing-masing: `assets/markers/`, `assets/models/`, dan `assets/sounds/`.
 
 Semua pemetaan, posisi, rotasi, ukuran, dan filter tracking ada di `config.js`. Urutan `targetIndex` harus sama dengan urutan compile. Jika gambar marker ditambah, diganti, atau diurutkan ulang, buka `tools/compile.html` melalui Live Server. Setelah compile selesai, unduh dan timpa `assets/markers/animals.mind`. Mengganti hanya model atau suara tidak membutuhkan compile ulang.
 
-File model diunduh bertahap di latar belakang setelah kamera siap, lalu diproses saat halaman terkait terdeteksi. Model yang telah diproses disimpan dalam memori. `height` membatasi tinggi; lebar/kedalaman juga dibatasi agar muat di halaman. `position` menggunakan koordinat halaman, `rotation` radian, dan `faceCamera: false` dan rotasi X PI/2 membuat hewan berdiri relatif terhadap bidang halaman. Bergeraklah mengelilingi buku untuk melihat sisi lain; marker harus tetap terlihat. Ini menggunakan pose image tracking, bukan sensor gyroscope terpisah. Aset saat ini tidak memiliki animation clips; jika aset pengganti memiliki animasi, Idle atau clip pertama dimainkan.
+File model diunduh bertahap di latar belakang setelah kamera siap, lalu diproses saat halaman terkait terdeteksi. Model yang telah diproses disimpan dalam memori. `height` membatasi tinggi; lebar/kedalaman juga dibatasi agar muat di halaman. `position` menggunakan koordinat halaman, `rotation` radian, dan `faceCamera: true` dan rotasi nol menjaga hewan menghadap kamera; geser horizontal pada model untuk melihat sisi lainnya. Posisi tetap mengikuti marker yang harus terlihat. Aset saat ini tidak memiliki animation clips; jika aset pengganti memiliki animasi, Idle atau clip pertama dimainkan.
 
 ## Optimasi
 
@@ -54,3 +54,5 @@ Referensi: [MindAR multi-targets](https://hiukim.github.io/mind-ar-js-doc/exampl
 Model belum dimuat: tidak ada bentuk placeholder. Label nama di bawah model dan tombol hentikan suara dihapus. File MP3 asli tetap utuh; batas 15 detik diterapkan saat playback.
 
 Kamera memakai satu stream untuk izin dan tracking. Adapter `_startVideo` khusus versi MindAR 1.2.5 memakai stream itu agar kamera tidak ditutup/dibuka ulang. Bila versi MindAR diperbarui, uji adapter ini kembali. Warmup 2 / miss 3 frame dan smoothing rate 28 mengurangi latensi; kestabilan perlu diuji di HP/buku cetak.
+
+Orientasi terbaru: hewan menghadap kamera (`faceCamera: true`, rotation nol). Geser horizontal pada model untuk memutar 360 derajat; ketukan singkat memainkan suara. Rotasi manual dipertahankan relatif terhadap kamera dan direset saat berpindah ke hewan lain. Ini tidak menggunakan sensor gyro terpisah.
