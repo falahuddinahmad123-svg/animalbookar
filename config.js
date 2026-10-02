@@ -1,5 +1,5 @@
 "use strict";
-// Target indexes follow compiler order. Models face the camera; dragging adds a local yaw offset.
+// Target indexes follow compiler order.
 const BOOK_CONFIG = {
   "target": "./assets/markers/animals.mind",
   "tracking": {
@@ -29,7 +29,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Elephant / Gajah",
+      "subtitleEn": "The Gentle Giant",
+      "subtitleId": "Raksasa yang Lembut"
     },
     {
       "id": "frog",
@@ -50,7 +53,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Frog / Katak",
+      "subtitleEn": "The Bouncy Jumper",
+      "subtitleId": "Si Pelompat"
     },
     {
       "id": "kitten",
@@ -71,7 +77,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Cat / Kucing",
+      "subtitleEn": "The Curious Companion",
+      "subtitleId": "Teman yang Penasaran"
     },
     {
       "id": "lion",
@@ -92,7 +101,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Lion / Singa",
+      "subtitleEn": "The King of the Jungle",
+      "subtitleId": "Raja Rimba"
     },
     {
       "id": "monkey",
@@ -113,7 +125,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Monkey / Monyet",
+      "subtitleEn": "The Playful One",
+      "subtitleId": "Si Suka Bermain"
     },
     {
       "id": "rooster",
@@ -134,7 +149,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Rooster / Ayam Jantan",
+      "subtitleEn": "The Early Riser",
+      "subtitleId": "Si Bangun Pagi"
     },
     {
       "id": "tiger",
@@ -155,7 +173,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Tiger / Harimau",
+      "subtitleEn": "The Striped Hunter",
+      "subtitleId": "Pemburu Bergaris"
     },
     {
       "id": "wolf",
@@ -176,7 +197,10 @@ const BOOK_CONFIG = {
         0,
         0
       ],
-      "color": 9681374
+      "color": 9681374,
+      "labelName": "Wolf / Serigala",
+      "subtitleEn": "The Wild Pack Animal",
+      "subtitleId": "Hewan Kawanan Liar"
     }
   ]
 };

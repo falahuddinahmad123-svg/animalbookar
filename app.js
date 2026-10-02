@@ -102,6 +102,31 @@ function resizePreview() {
   previewCamera.position.z = Math.max(1.9, 0.7 / Math.tan(Math.PI / 8) / previewCamera.aspect);
   previewCamera.updateProjectionMatrix();
 }
+// Canvas labels are created once, and do not intercept taps or rotate with dragging.
+function makeAnimalLabel(lines, width, height) {
+  const canvas = document.createElement("canvas"); canvas.width = 1024; canvas.height = lines.length === 1 ? 128 : 208;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "rgba(16,30,49,0.9)";
+  ctx.beginPath(); ctx.roundRect(0, 0, canvas.width, canvas.height, 28); ctx.fill();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  lines.forEach((text, index) => {
+    let size = lines.length === 1 ? 66 : 56;
+    do { ctx.font = `600 ${size}px system-ui, sans-serif`; if (ctx.measureText(text).width <= 944) break; size--; } while (size > 24);
+    ctx.fillStyle = index === 0 ? "#ffffff" : "#9debd1";
+    ctx.fillText(text, 512, canvas.height * (index + 0.5) / lines.length);
+  });
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: texture, depthTest: false, depthWrite: false}));
+  sprite.scale.set(width, height, 1); sprite.renderOrder = 10; sprite.raycast = () => {};
+  return sprite;
+}
+function addAnimalLabels(entry, height) {
+  const labels = new THREE.Group();
+  const title = makeAnimalLabel([entry.config.labelName], 0.72, 0.09);
+  const subtitle = makeAnimalLabel([entry.config.subtitleEn, entry.config.subtitleId], 0.92, 0.16);
+  title.position.y = height + 0.085; subtitle.position.y = -0.12;
+  labels.add(title, subtitle); entry.group.add(labels); entry.labels = labels;
+}
 function createAnimal(config) {
   const group = new THREE.Group(); group.userData.animalId = config.id; group.position.fromArray(config.position);
   const visual = new THREE.Group(); group.add(visual);
@@ -129,6 +154,7 @@ async function loadAnimalModel(entry) {
     entry.visual.traverse(object => { object.geometry?.dispose(); if (object.material) materials.add(object.material); });
     for (const material of materials) material.dispose();
     entry.visual.clear(); entry.visual.add(normalized); entry.placeholder = false;
+    addAnimalLabels(entry, size.y * normalized.scale.y);
     modelBuffers.delete(entry.config.model);
     if (activeId === entry.config.id && (mode !== "ar" || tracking)) status(`${entry.config.name} terdeteksi`);
     if (model.animations.length) {
@@ -145,6 +171,7 @@ function animateAnimals(delta, camera) {
     if (mode === "preview") entry.visual.quaternion.identity();
     else if (entry.config.faceCamera) entry.visual.quaternion.copy(pose.parent).invert().multiply(pose.camera).multiply(entry.correction);
     else entry.visual.quaternion.copy(entry.correction);
+    if (entry.labels) entry.labels.quaternion.copy(pose.parent).invert().multiply(pose.camera);
     entry.visual.quaternion.multiply(entry.userRotation);
     entry.mixer?.update(delta);
   }

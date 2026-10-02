@@ -56,3 +56,5 @@ Model belum dimuat: tidak ada bentuk placeholder. Label nama di bawah model dan 
 Kamera memakai satu stream untuk izin dan tracking. Adapter `_startVideo` khusus versi MindAR 1.2.5 memakai stream itu agar kamera tidak ditutup/dibuka ulang. Bila versi MindAR diperbarui, uji adapter ini kembali. Warmup 2 / miss 3 frame dan smoothing rate 28 mengurangi latensi; kestabilan perlu diuji di HP/buku cetak.
 
 Orientasi terbaru: hewan menghadap kamera (`faceCamera: true`, rotation nol). Geser horizontal pada model untuk memutar 360 derajat; ketukan singkat memainkan suara. Rotasi manual dipertahankan relatif terhadap kamera dan direset saat berpindah ke hewan lain. Ini tidak menggunakan sensor gyro terpisah.
+
+Nama bilingual kini tampil di atas model; judul Inggris dan Indonesia dari marker tampil dua baris di bawahnya. Teks diatur lewat labelName, subtitleEn, subtitleId di config.js. Label muncul setelah GLB siap, mengikuti kamera dan tidak ikut berputar saat model digeser.
