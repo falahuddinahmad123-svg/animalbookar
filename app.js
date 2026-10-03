@@ -212,7 +212,7 @@ function playAnimal(id) {
   });
 }
 
-// MINDAR: eight page targets; one active page and animal at a time.
+// MINDAR: configured page targets; one active page and animal at a time.
 async function startAR() {
   if (arFailed) { location.reload(); return; }
   if (starting || mode === "ar") return;
@@ -235,6 +235,14 @@ async function startAR() {
       mindar.cssRenderer.domElement.style.pointerEvents = "none"; addLights(mindar.scene);
       for (const entry of entries.values()) {
         const target = mindar.addAnchor(entry.config.targetIndex);
+        // Restore full-page coordinates after recognizing an illustration crop.
+        if (entry.config.targetCrop) {
+          const [x, y, width, height] = entry.config.targetCrop;
+          const frame = new THREE.Group();
+          frame.position.set((0.5 - x - width / 2) / width, (y + height / 2 - 0.5) / width, 0);
+          frame.scale.setScalar(1 / width);
+          target.group.add(frame); target.contentFrame = frame;
+        }
         target.onTargetFound = () => {
           if (mode !== "ar") return;
           stopSound(); anchor = target; tracking = true; poseReady = false;
@@ -274,7 +282,8 @@ async function startAR() {
 function renderAR() {
   const delta = Math.min(clock.getDelta(), 0.1);
   if (tracking && anchor?.group.visible) {
-    anchor.group.updateWorldMatrix(true, false); anchor.group.matrixWorld.decompose(pose.position, pose.rotation, pose.scale);
+    const frame = anchor.contentFrame || anchor.group;
+    frame.updateWorldMatrix(true, false); frame.matrixWorld.decompose(pose.position, pose.rotation, pose.scale);
     pose.rotation.normalize(); pose.scale.setScalar((pose.scale.x + pose.scale.y + pose.scale.z) / 3);
     if (!poseReady) { content.position.copy(pose.position); content.quaternion.copy(pose.rotation); content.scale.copy(pose.scale); poseReady = true; }
     else { const alpha = 1 - Math.exp(-BOOK_CONFIG.tracking.smoothingRate * delta); content.position.lerp(pose.position, alpha); content.quaternion.slerp(pose.rotation, alpha); content.scale.lerp(pose.scale, alpha); }

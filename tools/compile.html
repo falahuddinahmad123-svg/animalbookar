@@ -1,10 +1,11 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Compile animal pages</title><script src="../config.js"></script></head><body><h1>Compiler 8 halaman hewan</h1><p id="status">Memuat compiler...</p><a id="download" hidden download="animals.mind">Unduh animals.mind</a><script type="module">
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Compile animal pages</title><script src="../config.js"></script></head><body><h1>Compiler halaman hewan</h1><p id="status">Memuat compiler...</p><a id="download" hidden download="animals.mind">Unduh animals.mind</a><script type="module">
 window.compileState={progress:0};
 window.addEventListener('unhandledrejection',e=>{window.compileState.error=String(e.reason);document.querySelector('#status').textContent=String(e.reason)});
 try {
  const {Compiler}=await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js');
  const images=[];
- for(const animal of BOOK_CONFIG.animals){const img=new Image();img.src='../'+animal.marker.replace('./','');await img.decode();images.push(img)}
+ for(const animal of BOOK_CONFIG.animals){const img=new Image();img.src='../'+animal.marker.replace('./','');await img.decode();
+ if(animal.targetCrop){const [x,y,w,h]=animal.targetCrop;const canvas=document.createElement('canvas');canvas.width=Math.round(img.naturalWidth*w);canvas.height=Math.round(img.naturalHeight*h);canvas.getContext('2d').drawImage(img,img.naturalWidth*x,img.naturalHeight*y,img.naturalWidth*w,img.naturalHeight*h,0,0,canvas.width,canvas.height);images.push(canvas)}else images.push(img)}
  const compiler=new Compiler();
  await compiler.compileImageTargets(images,p=>{window.compileState.progress=Math.round(p);document.querySelector('#status').textContent='Compiling '+Math.round(p)+'%'});
  const bytes=compiler.exportData();const targets=new Compiler().importData(bytes);

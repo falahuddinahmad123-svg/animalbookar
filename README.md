@@ -1,6 +1,6 @@
 # Animal Books AR
 
-Satu halaman = satu marker = satu hewan 3D = satu suara sesuai nama. Delapan halaman didukung; hanya satu hewan aktif pada satu waktu. Tidak ada link kontak, database, atau backend aplikasi.
+Satu halaman = satu marker = satu hewan 3D = satu suara sesuai nama. Sebelas halaman didukung; hanya satu hewan aktif pada satu waktu. Tidak ada link kontak, database, atau backend aplikasi.
 
 ## Menjalankan
 
@@ -23,7 +23,7 @@ Kamera HP memerlukan HTTPS. Localhost dapat digunakan pada komputer yang menjala
 | 6 | tiger.png | tiger3d.glb | tiger.mp3 |
 | 7 | wolf.png | wolf3d.glb | wolf.mp3 |
 
-Folder masing-masing: `assets/markers/`, `assets/models/`, dan `assets/sounds/`. Cover tidak dijadikan target. `assets/markers/animals.mind` sudah dikompilasi dari delapan PNG asli dengan compiler MindAR, bukan file placeholder. Satu file menyimpan delapan target terpisah; `maxTrack: 1` membatasi hewan yang ditampilkan bersamaan.
+Folder masing-masing: `assets/markers/`, `assets/models/`, dan `assets/sounds/`. Cover tidak dijadikan target. `assets/markers/animals.mind` sudah dikompilasi dari delapan PNG asli dengan compiler MindAR, bukan file placeholder. Satu file menyimpan sebelas target terpisah; `maxTrack: 1` membatasi hewan yang ditampilkan bersamaan.
 
 ## Mengganti aset
 
@@ -58,3 +58,15 @@ Kamera memakai satu stream untuk izin dan tracking. Adapter `_startVideo` khusus
 Orientasi terbaru: hewan menghadap kamera (`faceCamera: true`, rotation nol). Geser horizontal pada model untuk memutar 360 derajat; ketukan singkat memainkan suara. Rotasi manual dipertahankan relatif terhadap kamera dan direset saat berpindah ke hewan lain. Ini tidak menggunakan sensor gyro terpisah.
 
 Nama bilingual kini tampil di atas model; judul Inggris dan Indonesia dari marker tampil dua baris di bawahnya. Teks diatur lewat labelName, subtitleEn, subtitleId di config.js. Label muncul setelah GLB siap, mengikuti kamera dan tidak ikut berputar saat model digeser.
+
+## Hewan tambahan
+
+Target 8: dog.png / dog.glb / dog.mp3 ? Dog / Anjing ? The Loyal Friend / Si Teman Setia.
+
+Target 9: sheep.png / sheep.glb / sheep.mp3 ? Sheep / Domba ? The Fluffy Friend / Si Teman Berbulu Lembut.
+
+Target 10: cow.png / cow.glb / cow.mp3 ? Cow / Sapi ? The Milk Giver / Si Penghasil Susu.
+
+animals.mind sudah dikompilasi ulang untuk 11 target; query versi target mencegah penggunaan target lama dari cache. Ketiga model baru dioptimalkan dari total 91,78 MB menjadi sekitar 6,53 MB; sumber asli di .optimization/originals.
+
+Marker dog/sheep/cow/rooster memakai targetCrop pada ilustrasi hewan untuk mengurangi salah deteksi dari latar dan layout yang sama. Cetak PNG utuh seperti biasa; koordinat AR dikembalikan ke halaman penuh agar ukuran dan posisi model konsisten. Compile ulang bila crop berubah.

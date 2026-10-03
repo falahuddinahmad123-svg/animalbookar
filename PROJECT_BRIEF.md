@@ -15,3 +15,5 @@ Project terpisah di C:/Users/PT KIW/Documents/TFA/Animal Book AR.
 - Jangan mengubah atau deploy ke BusinessCard/SitePlan. Deployment baru belum diminta.
 
 Lihat README.md untuk menjalankan, pemetaan lengkap, compiler, dan validasi.
+
+Update: total 11 hewan, tambahan dog/sheep/cow dengan marker/model/suara asli. Index lama 0-7 tetap, index baru 8-10. Tiga target baru memakai crop ilustrasi di config.js karena layout halaman mirip. Nama bilingual di atas dan judul marker di bawah, rotasi drag, audio maksimal 15 detik.

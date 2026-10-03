@@ -30,7 +30,7 @@ let browser,socket;
  for(let i=0;i<180;i++){
    await pause(5000);const state=JSON.parse(await evaluate('JSON.stringify(window.compileState || {})'));console.log(JSON.stringify(state));
    if(state.error)throw Error(state.error);
-   if(state.done){const bytes=Buffer.from(await evaluate('window.compiledBase64'),'base64');assert.equal(bytes.length,state.bytes);assert.equal(state.targets,8);fs.writeFileSync(path.join(root,'assets/markers/animals.mind'),bytes);complete=true;break;}
+   if(state.done){const bytes=Buffer.from(await evaluate('window.compiledBase64'),'base64');assert.equal(bytes.length,state.bytes);assert.equal(state.targets,await evaluate("BOOK_CONFIG.animals.length"));fs.writeFileSync(path.join(root,'assets/markers/animals.mind'),bytes);complete=true;break;}
  }
  assert(complete,'Compilation timed out');
  await call('Browser.close').catch(()=>{});

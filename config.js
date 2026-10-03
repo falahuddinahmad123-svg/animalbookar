@@ -1,7 +1,7 @@
 "use strict";
-// Target indexes follow compiler order.
+// Target indexes follow compiler order. targetCrop is normalized x,y,width,height.
 const BOOK_CONFIG = {
-  "target": "./assets/markers/animals.mind",
+  "target": "./assets/markers/animals.mind?v=11-crop2",
   "tracking": {
     "filterMinCF": 0.001,
     "filterBeta": 100,
@@ -152,7 +152,13 @@ const BOOK_CONFIG = {
       "color": 9681374,
       "labelName": "Rooster / Ayam Jantan",
       "subtitleEn": "The Early Riser",
-      "subtitleId": "Si Bangun Pagi"
+      "subtitleId": "Si Bangun Pagi",
+      "targetCrop": [
+        0.46,
+        0.07,
+        0.53,
+        0.69
+      ]
     },
     {
       "id": "tiger",
@@ -201,6 +207,96 @@ const BOOK_CONFIG = {
       "labelName": "Wolf / Serigala",
       "subtitleEn": "The Wild Pack Animal",
       "subtitleId": "Hewan Kawanan Liar"
+    },
+    {
+      "id": "dog",
+      "name": "Anjing",
+      "targetIndex": 8,
+      "marker": "./assets/markers/dog.png",
+      "model": "./assets/models/dog.glb?v=2",
+      "sound": "./assets/sounds/dog.mp3",
+      "position": [
+        0,
+        -0.25,
+        0.03
+      ],
+      "height": 0.6,
+      "faceCamera": true,
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "color": 9681374,
+      "labelName": "Dog / Anjing",
+      "subtitleEn": "The Loyal Friend",
+      "subtitleId": "Si Teman Setia",
+      "targetCrop": [
+        0.47,
+        0.25,
+        0.52,
+        0.61
+      ]
+    },
+    {
+      "id": "sheep",
+      "name": "Domba",
+      "targetIndex": 9,
+      "marker": "./assets/markers/sheep.png",
+      "model": "./assets/models/sheep.glb?v=2",
+      "sound": "./assets/sounds/sheep.mp3",
+      "position": [
+        0,
+        -0.25,
+        0.03
+      ],
+      "height": 0.6,
+      "faceCamera": true,
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "color": 9681374,
+      "labelName": "Sheep / Domba",
+      "subtitleEn": "The Fluffy Friend",
+      "subtitleId": "Si Teman Berbulu Lembut",
+      "targetCrop": [
+        0.47,
+        0.25,
+        0.52,
+        0.61
+      ]
+    },
+    {
+      "id": "cow",
+      "name": "Sapi",
+      "targetIndex": 10,
+      "marker": "./assets/markers/cow.png",
+      "model": "./assets/models/cow.glb?v=2",
+      "sound": "./assets/sounds/cow.mp3",
+      "position": [
+        0,
+        -0.25,
+        0.03
+      ],
+      "height": 0.6,
+      "faceCamera": true,
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "color": 9681374,
+      "labelName": "Cow / Sapi",
+      "subtitleEn": "The Milk Giver",
+      "subtitleId": "Si Penghasil Susu",
+      "targetCrop": [
+        0.47,
+        0.25,
+        0.52,
+        0.61
+      ]
     }
   ]
 };

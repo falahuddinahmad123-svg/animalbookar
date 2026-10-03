@@ -31,13 +31,13 @@ let browser,socket;
  navigator.mediaDevices.getUserMedia=async()=>{
  window.cameraRequests++;
  const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=960;const ctx=canvas.getContext('2d');const images={};
- for(const id of ['elephant','frog','kitten','lion','monkey','rooster','tiger','wolf']){const im=new Image();im.src='/assets/markers/'+id+'.png';images[id]=im;}
+ for(const id of ['elephant','frog','kitten','lion','monkey','rooster','tiger','wolf','dog','sheep','cow']){const im=new Image();im.src='/assets/markers/'+id+'.png';images[id]=im;}
  const draw=()=>{ctx.fillStyle='#dddddd';ctx.fillRect(0,0,1280,960);const im=images[window.testPage];if(!window.hideTestCard&&im?.complete&&im.naturalWidth)ctx.drawImage(im,340,180,600,600);};draw();
  const timer=setInterval(draw,80);const stream=canvas.captureStream(15);stream.getTracks().forEach(track=>{const stop=track.stop.bind(track);track.stop=()=>{clearInterval(timer);stop()}});return stream;
  };`});
  await call('Page.navigate',{url:origin+'/?preview=1'});
  const until=async(expression,message,seconds=60)=>{for(let i=0;i<seconds;i++){if(await evaluate(expression))return;await pause(1000)}throw Error(message+': '+await evaluate('ui.status.textContent'))};
- await until('typeof entries!=="undefined" && entries.size===8 && !entries.get("elephant").placeholder','Initial model');
+ await until('typeof entries!=="undefined" && entries.size===BOOK_CONFIG.animals.length && !entries.get("elephant").placeholder','Initial model');
  const ids=await evaluate('BOOK_CONFIG.animals.map(a=>a.id)');
  fs.mkdirSync(path.join(root,'verification'),{recursive:true});
  for(const id of ids){
@@ -54,7 +54,7 @@ let browser,socket;
 
  assert(await evaluate('[...entries.values()].every(e=>e.labels?.children.length===2 && e.labels.children[0].position.y>0 && e.labels.children[1].position.y<0)'));
  assert.equal(await evaluate('document.getElementById("stop-audio")'),null);
- await evaluate('selectPreview("lion");playAnimal("lion")');
+ console.log('Checking audio cutoff');await evaluate('selectPreview("lion")');await evaluate('playAnimal("lion")');
  await until('activeAudio && activeAudio.currentTime>0','Long audio started');
  assert(await evaluate('activeAudio.duration>15'));
  await evaluate('window.cappedAudio=activeAudio');
@@ -71,7 +71,7 @@ let browser,socket;
   await until(`tracking && activeId==='${id}' && content.visible`,'Track '+id,60);
   assert.equal(await evaluate('[...entries.values()].filter(e=>e.group.visible).length'),1);
   console.log('PASS real MindAR recognition with synthetic camera: '+id);
-  if(id==='elephant'){const shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(root,'verification/ar-elephant.png'),Buffer.from(shot.data,'base64'));}
+  if(['elephant','dog','sheep','cow'].includes(id)){const shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(root,'verification/ar-'+id+'.png'),Buffer.from(shot.data,'base64'));}
   await evaluate(`playAnimal('${id}');window.hideTestCard=true`);
   await until('!tracking && !content.visible && activeAudio===null','Target loss and audio stop',30);
  }
@@ -100,6 +100,6 @@ let browser,socket;
  await until('typeof ui!=="undefined" && ui.status.textContent.includes("Izinkan")','Camera denied message');
  assert(await evaluate('!ui["start-ar"].hidden && !ui["start-ar"].disabled'));
  console.log('PASS camera permission error and retry control');
- console.log('PASS all eight targets, hide-on-loss, stop audio, return to preview');
+ console.log('PASS all configured targets, hide-on-loss, stop audio, return to preview');
  await call('Browser.close').catch(()=>{});
 })().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>{socket?.close();browser?.kill();server.closeAllConnections();server.close()});
